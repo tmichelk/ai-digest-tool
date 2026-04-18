@@ -113,7 +113,12 @@ async function main() {
     return;
   }
 
-  const result = await model.generateContent(prompt);
+  console.log('Gemini APIにリクエスト送信中（最大90秒）...');
+  const geminiPromise = model.generateContent(prompt);
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Gemini APIがタイムアウトしました（90秒）')), 90000)
+  );
+  const result = await Promise.race([geminiPromise, timeoutPromise]);
   const message = result.response.text().trim();
 
   // 4. 価値ある情報がなければ終了
