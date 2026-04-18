@@ -1,4 +1,4 @@
-name: AI Daily Digest
+name: AI Digest
 
 on:
   workflow_dispatch: {}
@@ -12,60 +12,27 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        id: checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        id: node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Install dependencies
-        id: install
         run: npm ci
 
-      - name: Read prompt
-        id: read-prompt
-        run: |
-          {
-            echo 'content<<EOF'
-            cat .claude/prompts/daily-digest.md
-            echo ''
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Run Claude Code
-        id: claude
-        uses: anthropics/claude-code-action@v1
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt: ${{ steps.read-prompt.outputs.content }}
-          claude_args: "--allowedTools 'Bash,Read,Write,Edit,Glob,Grep,Skill,TodoWrite'"
-          show_full_output: true
+      - name: Run AI Digest
+        run: node main.js
         env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
           LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
 
       - name: Notify failure to LINE
         if: failure()
-        # GitHub Actions のシェルで実行するため curl を使用（CLAUDE.md の禁止はエージェント向け）
         run: |
-          FAILED_STEP=""
-          if [[ "${{ steps.checkout.outcome }}" == "failure" ]]; then
-            FAILED_STEP="チェックアウト"
-          elif [[ "${{ steps.node.outcome }}" == "failure" ]]; then
-            FAILED_STEP="Node.js セットアップ"
-          elif [[ "${{ steps.install.outcome }}" == "failure" ]]; then
-            FAILED_STEP="依存パッケージのインストール"
-          elif [[ "${{ steps.claude.outcome }}" == "failure" ]]; then
-            FAILED_STEP="Claude Code の実行"
-          else
-            FAILED_STEP="不明なステップ"
-          fi
-
-          MESSAGE="❌ AI Digest エラー%0A%0A失敗箇所: ${FAILED_STEP}%0A詳細: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
+          MESSAGE="❌ AI Digest エラー%0A詳細: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           curl -s -X POST "https://api.line.me/v2/bot/message/push" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $LINE_CHANNEL_ACCESS_TOKEN" \
