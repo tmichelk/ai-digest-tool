@@ -9,7 +9,7 @@ feeds:
 
   - id: anthropic
     name: Anthropic Blog
-    url: https://www.anthropic.com/blog/rss
+    url: https://anthropic.com/news/feed_anthropic.xml
     category: tools
 
   - id: google_ai
@@ -24,7 +24,7 @@ feeds:
 
   - id: meta_ai
     name: Meta AI Blog
-    url: https://ai.meta.com/blog/rss/
+    url: https://engineering.fb.com/feed/
     category: tools
 
   # ─── 研究・技術 ──────────────────────────────────
@@ -51,7 +51,7 @@ feeds:
 
   - id: theverge_ai
     name: The Verge AI
-    url: https://www.theverge.com/ai-artificial-intelligence/rss/index.xml
+    url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
     category: business
 
   - id: wired_ai
@@ -73,7 +73,7 @@ feeds:
   # ─── Cursor ──────────────────────────────────────
   - id: cursor_blog
     name: Cursor Blog
-    url: https://cursor.com/blog/rss.xml
+    url: https://cursor.com/atom.xml
     category: cursor
 
   - id: cursor_changelog
@@ -89,7 +89,7 @@ feeds:
 settings:
   # 各カテゴリの最大掲載件数
   max_articles_per_category: 3
-  # 何時間以内の記事を対象にするか（3時間おき実行に合わせる）
-  lookback_hours: 3
+  # 何時間以内の記事を対象にするか
+  lookback_hours: 24
   # 報告言語
   language: ja
