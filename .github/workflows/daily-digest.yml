@@ -2,8 +2,8 @@ name: AI Daily Digest
 
 on:
   workflow_dispatch: {}
-  # schedule:
-  #   - cron: '0 22 * * *'  # 毎日7:00 JST（有効にするにはコメントを外す）
+  schedule:
+    - cron: '0 */3 * * *'  # 3時間おき（JST: 0時・3時・6時・9時・12時・15時・18時・21時）
 
 jobs:
   digest:
