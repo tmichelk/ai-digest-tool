@@ -1,0 +1,95 @@
+# AI Digest ツール設定
+
+feeds:
+  # ─── 新ツール・サービス ───────────────────────────
+  - id: openai
+    name: OpenAI Blog
+    url: https://openai.com/blog/rss.xml
+    category: tools
+
+  - id: anthropic
+    name: Anthropic Blog
+    url: https://www.anthropic.com/blog/rss
+    category: tools
+
+  - id: google_ai
+    name: Google AI Blog
+    url: https://blog.google/technology/ai/rss/
+    category: tools
+
+  - id: deepmind
+    name: Google DeepMind Blog
+    url: https://deepmind.google/blog/rss.xml
+    category: tools
+
+  - id: meta_ai
+    name: Meta AI Blog
+    url: https://ai.meta.com/blog/rss/
+    category: tools
+
+  # ─── 研究・技術 ──────────────────────────────────
+  - id: huggingface
+    name: Hugging Face Blog
+    url: https://huggingface.co/blog/feed.xml
+    category: research
+
+  - id: arxiv_ai
+    name: ArXiv CS.AI
+    url: https://arxiv.org/rss/cs.AI
+    category: research
+
+  # ─── ビジネス活用・業界動向 ───────────────────────
+  - id: techcrunch_ai
+    name: TechCrunch AI
+    url: https://techcrunch.com/category/artificial-intelligence/feed/
+    category: business
+
+  - id: venturebeat_ai
+    name: VentureBeat AI
+    url: https://venturebeat.com/category/ai/feed/
+    category: business
+
+  - id: theverge_ai
+    name: The Verge AI
+    url: https://www.theverge.com/ai-artificial-intelligence/rss/index.xml
+    category: business
+
+  - id: wired_ai
+    name: Wired AI
+    url: https://www.wired.com/feed/tag/ai/latest/rss
+    category: business
+
+  # ─── 規制・政策 ──────────────────────────────────
+  - id: mit_ai
+    name: MIT Technology Review AI
+    url: https://www.technologyreview.com/topic/artificial-intelligence/feed/
+    category: policy
+
+  - id: arstechnica
+    name: Ars Technica
+    url: https://feeds.arstechnica.com/arstechnica/technology-lab
+    category: policy
+
+  # ─── Cursor ──────────────────────────────────────
+  - id: cursor_blog
+    name: Cursor Blog
+    url: https://cursor.com/blog/rss.xml
+    category: cursor
+
+  - id: cursor_changelog
+    name: Cursor Changelog
+    url: https://cursor.com/changelog/rss.xml
+    category: cursor
+
+  - id: reddit_cursor
+    name: Reddit r/cursor_ai
+    url: https://www.reddit.com/r/cursor_ai/.rss
+    category: cursor
+
+settings:
+  # 各カテゴリの最大掲載件数
+  max_articles_per_category: 3
+  # 何時間以内の記事を対象にするか
+  lookback_hours: 24
+  # 報告言語
+  language: ja

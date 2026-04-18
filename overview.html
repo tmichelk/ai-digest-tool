@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Digest Tool — 仕組みと概要</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: rgba(255,255,255,0.08);
+      --text: #f1f5f9;
+      --muted: #8892a4;
+      --accent: #6ee7b7;
+      --accent2: #818cf8;
+      --accent3: #fbbf24;
+      --line-green: #00b300;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      padding: 48px 24px 80px;
+    }
+
+    .container { max-width: 880px; margin: 0 auto; }
+
+    /* ── Hero ── */
+    .hero { text-align: center; margin-bottom: 72px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(110,231,183,.12); border: 1px solid rgba(110,231,183,.3);
+      color: var(--accent); font-size: 12px; font-weight: 600;
+      padding: 4px 12px; border-radius: 20px; margin-bottom: 20px;
+      letter-spacing: .5px; text-transform: uppercase;
+    }
+    .hero h1 { font-size: clamp(28px, 5vw, 42px); font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+    .hero h1 span { color: var(--accent); }
+    .hero p { font-size: 16px; color: var(--muted); max-width: 480px; margin: 0 auto; }
+
+    /* ── Section title ── */
+    .section-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 24px; display: flex; align-items: center; gap: 10px;
+    }
+    .section-title::before, .section-title::after {
+      content: ""; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── Flow ── */
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      margin-bottom: 72px;
+      position: relative;
+    }
+    .flow-item {
+      display: flex; flex-direction: column; align-items: center;
+      position: relative;
+    }
+    .flow-item:not(:last-child)::after {
+      content: "→";
+      position: absolute; right: -12px; top: 38px;
+      font-size: 18px; color: var(--muted); z-index: 2;
+    }
+    .flow-icon {
+      width: 64px; height: 64px; border-radius: 18px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; margin-bottom: 14px; position: relative;
+    }
+    .flow-icon .step-num {
+      position: absolute; top: -6px; right: -6px;
+      background: var(--accent); color: #0f1117;
+      width: 20px; height: 20px; border-radius: 50%;
+      font-size: 10px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .flow-body { text-align: center; padding: 0 8px; }
+    .flow-body h3 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .flow-body .badge {
+      display: inline-block; font-size: 10px; padding: 2px 8px;
+      border-radius: 10px; font-weight: 600; margin-bottom: 8px;
+    }
+    .badge-free { background: rgba(110,231,183,.15); color: var(--accent); }
+    .badge-paid { background: rgba(251,191,36,.15); color: var(--accent3); }
+    .flow-body p { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+    .f1 .flow-icon { background: rgba(129,140,248,.12); border: 1px solid rgba(129,140,248,.25); }
+    .f2 .flow-icon { background: rgba(110,231,183,.10); border: 1px solid rgba(110,231,183,.25); }
+    .f3 .flow-icon { background: rgba(251,191,36,.10);  border: 1px solid rgba(251,191,36,.25); }
+    .f4 .flow-icon { background: rgba(0,179,0,.15);     border: 1px solid rgba(0,179,0,.3); }
+
+    /* ── Categories ── */
+    .categories {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 10px; margin-bottom: 72px;
+    }
+    .cat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px 12px; text-align: center;
+      transition: border-color .2s;
+    }
+    .cat-card:hover { border-color: rgba(255,255,255,.2); }
+    .cat-emoji { font-size: 22px; margin-bottom: 8px; }
+    .cat-name { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+    .cat-sources { font-size: 10px; color: var(--muted); line-height: 1.4; }
+
+    /* ── Two columns ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-bottom: 72px; align-items: start; }
+
+    /* ── LINE Preview ── */
+    .phone-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 24px; display: flex; flex-direction: column; align-items: center;
+    }
+    .phone-label { font-size: 11px; color: var(--muted); margin-bottom: 14px; letter-spacing: .5px; }
+    .chat-bubble {
+      background: var(--line-green); color: #fff;
+      border-radius: 14px 14px 14px 4px;
+      padding: 14px 16px; font-size: 12px; line-height: 1.75;
+      max-width: 240px; box-shadow: 0 4px 24px rgba(0,179,0,.2);
+    }
+    .chat-bubble .chat-header { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+    .chat-bubble .divider { border-top: 1px solid rgba(255,255,255,.25); margin: 8px 0; }
+    .chat-bubble .cat-label { font-weight: 700; margin-bottom: 4px; font-size: 11px; }
+    .chat-bubble .article { margin-bottom: 8px; }
+    .chat-bubble .article-title { font-weight: 600; }
+    .chat-bubble .article-summary { opacity: .9; }
+    .chat-bubble .article-link { opacity: .65; font-size: 10px; }
+    .chat-bubble .footer { font-size: 10px; opacity: .6; }
+    .chat-meta { font-size: 10px; color: var(--muted); margin-top: 6px; align-self: flex-end; }
+
+    /* ── Cost table ── */
+    .cost-table { display: flex; flex-direction: column; gap: 8px; }
+    .cost-row {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .cost-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+    .cost-note { font-size: 11px; color: var(--muted); }
+    .cost-tag {
+      font-size: 11px; font-weight: 700; padding: 3px 10px;
+      border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+    }
+    .cost-tag-free { background: rgba(110,231,183,.15); color: var(--accent); }
+    .cost-tag-paid { background: rgba(251,191,36,.15); color: var(--accent3); }
+
+    /* ── Setup Steps ── */
+    .setup-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .setup-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px 14px; text-align: center;
+    }
+    .setup-letter {
+      width: 32px; height: 32px; border-radius: 10px;
+      background: var(--surface2); border: 1px solid var(--border);
+      font-size: 14px; font-weight: 800; color: var(--accent2);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+    }
+    .setup-icon { font-size: 22px; margin-bottom: 8px; }
+    .setup-title { font-size: 12px; font-weight: 700; margin-bottom: 6px; line-height: 1.4; }
+    .setup-note { font-size: 10px; color: var(--muted); line-height: 1.4; }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center; font-size: 12px; color: var(--muted);
+      border-top: 1px solid var(--border); padding-top: 32px; margin-top: 24px;
+    }
+    .footer a { color: var(--accent2); text-decoration: none; }
+
+    /* ── Responsive ── */
+    @media (max-width: 700px) {
+      .flow { grid-template-columns: 1fr 1fr; }
+      .flow-item:nth-child(2)::after, .flow-item:nth-child(4)::after { display: none; }
+      .categories { grid-template-columns: repeat(3, 1fr); }
+      .two-col { grid-template-columns: 1fr; }
+      .setup-steps { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 480px) {
+      .categories { grid-template-columns: 1fr 1fr; }
+      .setup-steps { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-badge">🤖 Automated News Digest</div>
+    <h1>AI Digest <span>Tool</span></h1>
+    <p>最新AIニュースをClaudeが毎朝要約し、LINEに自動配信する仕組みの全体像</p>
+  </div>
+
+  <!-- Flow -->
+  <div class="section-title">全体の流れ</div>
+  <div class="flow">
+    <div class="flow-item f1">
+      <div class="flow-icon">⏰<span class="step-num">1</span></div>
+      <div class="flow-body">
+        <h3>毎朝7時に自動起動</h3>
+        <span class="badge badge-free">無料</span>
+        <p>GitHub Actionsが<br>スケジュール通りに起動</p>
+      </div>
+    </div>
+    <div class="flow-item f2">
+      <div class="flow-icon">📡<span class="step-num">2</span></div>
+      <div class="flow-body">
+        <h3>ニュースを一括収集</h3>
+        <span class="badge badge-free">無料</span>
+        <p>RSS 15ソースから<br>過去24時間の記事を取得</p>
+      </div>
+    </div>
+    <div class="flow-item f3">
+      <div class="flow-icon">🤖<span class="step-num">3</span></div>
+      <div class="flow-body">
+        <h3>AIが選別・要約</h3>
+        <span class="badge badge-paid">約$0.05/回</span>
+        <p>Claude AIが重要記事を<br>日本語1〜2文に要約</p>
+      </div>
+    </div>
+    <div class="flow-item f4">
+      <div class="flow-icon">💬<span class="step-num">4</span></div>
+      <div class="flow-body">
+        <h3>LINEに送信</h3>
+        <span class="badge badge-free">無料</span>
+        <p>LINE Messaging APIで<br>自分のスマホに届く</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Categories -->
+  <div class="section-title">収集するニュースカテゴリ（15ソース）</div>
+  <div class="categories">
+    <div class="cat-card">
+      <div class="cat-emoji">🆕</div>
+      <div class="cat-name">新ツール・サービス</div>
+      <div class="cat-sources">OpenAI / Anthropic<br>Google / Meta</div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-emoji">🔬</div>
+      <div class="cat-name">研究・技術</div>
+      <div class="cat-sources">Hugging Face<br>ArXiv CS.AI</div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-emoji">💼</div>
+      <div class="cat-name">ビジネス活用</div>
+      <div class="cat-sources">TechCrunch / VentureBeat<br>The Verge / Wired</div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-emoji">📋</div>
+      <div class="cat-name">規制・政策</div>
+      <div class="cat-sources">MIT Tech Review<br>Ars Technica</div>
+    </div>
+    <div class="cat-card">
+      <div class="cat-emoji">🖥️</div>
+      <div class="cat-name">Cursor情報</div>
+      <div class="cat-sources">Cursor Blog / Changelog<br>Reddit r/cursor_ai</div>
+    </div>
+  </div>
+
+  <!-- Preview + Cost -->
+  <div class="two-col">
+    <!-- LINE Preview -->
+    <div>
+      <div class="section-title">届くメッセージのイメージ</div>
+      <div class="phone-wrap">
+        <div class="phone-label">毎朝 7:00 AM に届く</div>
+        <div class="chat-bubble">
+          <div class="chat-header">🤖 AI Daily Digest｜4/10</div>
+          <div class="divider"></div>
+          <div class="cat-label">🆕 新ツール・サービス</div>
+          <div class="article">
+            <div class="article-title">▶ GPT-5がリリース</div>
+            <div class="article-summary">推論能力が大幅向上。コーディングと数学ベンチマークで最高スコアを記録。</div>
+            <div class="article-link">→ openai.com/blog/gpt-5</div>
+          </div>
+          <div class="divider"></div>
+          <div class="cat-label">🖥️ Cursor情報</div>
+          <div class="article">
+            <div class="article-title">▶ Cursor v0.50リリース</div>
+            <div class="article-summary">Background Agentが正式版に。並列タスク実行に対応。</div>
+            <div class="article-link">→ cursor.com/changelog</div>
+          </div>
+          <div class="divider"></div>
+          <div class="footer">本日 28件収集 → 9件をピックアップ<br>🤖 AI Digest で自動生成</div>
+        </div>
+        <div class="chat-meta">7:00 AM ✓✓</div>
+      </div>
+    </div>
+
+    <!-- Cost -->
+    <div>
+      <div class="section-title">料金と必要なもの</div>
+      <div class="cost-table">
+        <div class="cost-row">
+          <div>
+            <div class="cost-name">GitHub Actions</div>
+            <div class="cost-note">月2,000分の無料枠内で十分</div>
+          </div>
+          <span class="cost-tag cost-tag-free">無料</span>
+        </div>
+        <div class="cost-row">
+          <div>
+            <div class="cost-name">RSSフィード</div>
+            <div class="cost-note">全15ソースが無料で利用可能</div>
+          </div>
+          <span class="cost-tag cost-tag-free">無料</span>
+        </div>
+        <div class="cost-row">
+          <div>
+            <div class="cost-name">LINE Messaging API</div>
+            <div class="cost-note">月200通まで無料（1日1通で余裕）</div>
+          </div>
+          <span class="cost-tag cost-tag-free">無料</span>
+        </div>
+        <div class="cost-row">
+          <div>
+            <div class="cost-name">Claude API</div>
+            <div class="cost-note">唯一の有料項目。月$1〜3程度</div>
+          </div>
+          <span class="cost-tag cost-tag-paid">約$0.05/回</span>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:32px;">必要なアカウント</div>
+      <div class="cost-table">
+        <div class="cost-row">
+          <div>
+            <div class="cost-name">🐙 GitHub</div>
+            <div class="cost-note">コードの置き場所・自動実行の基盤</div>
+          </div>
+          <span class="cost-tag cost-tag-free">無料</span>
+        </div>
+        <div class="cost-row">
+          <div>
+            <div class="cost-name">🤖 Anthropic Console</div>
+            <div class="cost-note">Claude APIキーの発行（$5チャージ必要）</div>
+          </div>
+          <span class="cost-tag cost-tag-paid">有料</span>
+        </div>
+        <div class="cost-row">
+          <div>
+            <div class="cost-name">💬 LINE Developers</div>
+            <div class="cost-note">LINEボット作成（無料・5分で完了）</div>
+          </div>
+          <span class="cost-tag cost-tag-free">無料</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Setup Steps -->
+  <div class="section-title">セットアップの流れ（全4ステップ）</div>
+  <div class="setup-steps">
+    <div class="setup-card">
+      <div class="setup-letter">A</div>
+      <div class="setup-icon">🐙</div>
+      <div class="setup-title">GitHubに<br>コードをpush</div>
+      <div class="setup-note">リポジトリをPrivateで作成し、このツールのコードをアップロードする</div>
+    </div>
+    <div class="setup-card">
+      <div class="setup-letter">B</div>
+      <div class="setup-icon">💬</div>
+      <div class="setup-title">LINE公式アカウント<br>を作成</div>
+      <div class="setup-note">LINE Developersでボットを作り、自分のLINEに友だち追加する</div>
+    </div>
+    <div class="setup-card">
+      <div class="setup-letter">C</div>
+      <div class="setup-icon">🔑</div>
+      <div class="setup-title">APIキーを<br>3つ登録</div>
+      <div class="setup-note">GitHub SecretsにAnthropicとLINEのキーを設定する</div>
+    </div>
+    <div class="setup-card">
+      <div class="setup-letter">D</div>
+      <div class="setup-icon">▶️</div>
+      <div class="setup-title">手動実行で<br>動作確認</div>
+      <div class="setup-note">GitHub ActionsからRun workflowをクリックしてLINEに届くか確認</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer" style="margin-top:64px;">
+    <p>AI Digest Tool &nbsp;·&nbsp; Built with <a href="https://www.anthropic.com">Claude</a> &nbsp;·&nbsp; Powered by <a href="https://github.com/features/actions">GitHub Actions</a></p>
+  </div>
+
+</div>
+</body>
+</html>
