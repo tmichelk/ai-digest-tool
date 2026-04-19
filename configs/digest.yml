@@ -9,7 +9,7 @@ feeds:
 
   - id: anthropic
     name: Anthropic Blog
-    url: https://anthropic.com/news/feed_anthropic.xml
+    url: https://www.anthropic.com/rss.xml
     category: tools
 
   - id: google_ai
@@ -81,10 +81,10 @@ feeds:
     url: https://cursor.com/changelog/rss.xml
     category: cursor
 
-  - id: reddit_cursor
-    name: Reddit r/cursor_ai
-    url: https://www.reddit.com/r/cursor_ai/.rss
-    category: cursor
+  - id: reddit_localllama
+    name: Reddit r/LocalLLaMA
+    url: https://www.reddit.com/r/LocalLLaMA/.rss
+    category: research
 
 settings:
   # 各カテゴリの最大掲載件数
