@@ -3,7 +3,7 @@
 
 const { execSync } = require('child_process');
 const fs = require('fs');
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleAuth } = require('google-auth-library');
 
 const MESSAGE_PATH = '/tmp/digest-message.txt';
 const FEEDS_PATH = '/tmp/raw-feeds.json';
@@ -109,12 +109,14 @@ async function main() {
   const credentials = JSON.parse(credentialsJson);
   const projectId = credentials.project_id;
 
-  // 4. Google Gen AI クライアントを初期化（Vertex AIバックエンド）
-  const ai = new GoogleGenAI({
-    vertexai: true,
-    project: projectId,
-    location: 'us-central1',
+  // 4. サービスアカウントでアクセストークンを取得
+  const auth = new GoogleAuth({
+    keyFile: CREDENTIALS_PATH,
+    scopes: ['https://www.googleapis.com/auth/cloud-platform'],
   });
+  const authClient = await auth.getClient();
+  const tokenResponse = await authClient.getAccessToken();
+  const token = tokenResponse.token;
 
   const prompt = buildPrompt(rawData);
   if (prompt === 'NO_ARTICLES') {
@@ -122,17 +124,33 @@ async function main() {
     return;
   }
 
-  // 5. Gemini APIで分析・フォーマット
+  // 5. Vertex AI REST APIで直接Geminiを呼び出す
   console.log('Vertex AI Gemini APIにリクエスト送信中（最大90秒）...');
-  const geminiPromise = ai.models.generateContent({
-    model: 'gemini-2.0-flash',
-    contents: prompt,
+  const endpoint = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/gemini-1.5-flash:generateContent`;
+
+  const geminiPromise = fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { maxOutputTokens: 2048 },
+    }),
+  }).then(async (res) => {
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Vertex AI APIエラー: ${res.status} ${err}`);
+    }
+    return res.json();
   });
+
   const timeoutPromise = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('Gemini APIがタイムアウトしました（90秒）')), 90000)
   );
   const result = await Promise.race([geminiPromise, timeoutPromise]);
-  const message = result.text.trim();
+  const message = result.candidates[0].content.parts[0].text.trim();
 
   // 6. 価値ある情報がなければ終了
   if (!message || message === 'NO_CONTENT') {
