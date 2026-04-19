@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Digestツール｜今日やったこと全部図解</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f0f4f8; color: #1a202c; }
+
+  .hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: white; text-align: center; padding: 60px 20px;
+  }
+  .hero h1 { font-size: 2.2rem; margin-bottom: 12px; }
+  .hero p { font-size: 1.1rem; opacity: 0.8; max-width: 600px; margin: 0 auto; }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+
+  .section-title {
+    text-align: center; font-size: 1.5rem; font-weight: bold;
+    margin: 50px 0 30px; color: #2d3748;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+
+  /* ゴール図 */
+  .goal-box {
+    background: white; border-radius: 16px; padding: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 40px;
+  }
+  .goal-flow {
+    display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: 10px; margin-top: 20px;
+  }
+  .goal-item {
+    text-align: center; padding: 16px 20px;
+    background: #f7fafc; border-radius: 12px; min-width: 120px;
+  }
+  .goal-item .icon { font-size: 2rem; margin-bottom: 6px; }
+  .goal-item .label { font-size: 0.85rem; color: #4a5568; font-weight: 600; }
+  .goal-item .sub { font-size: 0.75rem; color: #718096; margin-top: 2px; }
+  .arrow { font-size: 1.5rem; color: #a0aec0; }
+
+  /* ステップカード */
+  .steps { display: flex; flex-direction: column; gap: 20px; }
+  .step {
+    background: white; border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+    overflow: hidden; display: flex;
+  }
+  .step-num {
+    min-width: 64px; display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; font-weight: bold; color: white;
+  }
+  .step-body { padding: 20px 24px; flex: 1; }
+  .step-body h3 { font-size: 1.05rem; margin-bottom: 8px; }
+  .step-body p { font-size: 0.9rem; color: #4a5568; line-height: 1.6; }
+
+  .you-did { border-left: 4px solid #4299e1; }
+  .you-did .step-num { background: #4299e1; }
+  .ai-did { border-left: 4px solid #48bb78; }
+  .ai-did .step-num { background: #48bb78; }
+  .error-step { border-left: 4px solid #f6ad55; }
+  .error-step .step-num { background: #f6ad55; }
+
+  .tag {
+    display: inline-block; font-size: 0.7rem; font-weight: bold;
+    padding: 2px 8px; border-radius: 20px; margin-bottom: 6px;
+  }
+  .tag-you { background: #bee3f8; color: #2b6cb0; }
+  .tag-ai { background: #c6f6d5; color: #276749; }
+  .tag-error { background: #feebc8; color: #c05621; }
+
+  /* 裏側の説明 */
+  .tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  .tech-card {
+    background: white; border-radius: 16px; padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+  }
+  .tech-card h3 { font-size: 1rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .tech-card p { font-size: 0.88rem; color: #4a5568; line-height: 1.7; }
+  .tech-card .analogy {
+    background: #f7fafc; border-radius: 8px; padding: 10px 12px;
+    font-size: 0.85rem; color: #2d3748; margin-top: 10px;
+    border-left: 3px solid #4299e1;
+  }
+
+  /* 完成形 */
+  .final-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white; border-radius: 20px; padding: 40px;
+    text-align: center; margin-top: 20px;
+  }
+  .final-box h2 { font-size: 1.8rem; margin-bottom: 16px; }
+  .final-box p { opacity: 0.9; line-height: 1.8; font-size: 1rem; }
+  .final-flow {
+    display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: 12px; margin: 24px 0;
+  }
+  .final-item {
+    background: rgba(255,255,255,0.15); border-radius: 12px;
+    padding: 12px 18px; text-align: center; backdrop-filter: blur(4px);
+  }
+  .final-item .icon { font-size: 1.8rem; }
+  .final-item .label { font-size: 0.8rem; margin-top: 4px; opacity: 0.9; }
+  .final-arrow { font-size: 1.4rem; opacity: 0.7; }
+
+  /* 残りタスク */
+  .todo-box {
+    background: white; border-radius: 16px; padding: 28px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07); margin-top: 30px;
+  }
+  .todo-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid #f0f4f8;
+  }
+  .todo-item:last-child { border-bottom: none; }
+  .todo-icon { font-size: 1.4rem; min-width: 30px; text-align: center; }
+  .todo-text h4 { font-size: 0.95rem; margin-bottom: 2px; }
+  .todo-text p { font-size: 0.83rem; color: #718096; }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 1.5rem; }
+    .step { flex-direction: column; }
+    .step-num { min-width: auto; padding: 12px; font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🤖 AI Digestツール<br>今日やったこと全図解</h1>
+  <p>「AIに指示してスクショしまくった」裏で何が起きていたか、新入社員でもわかるように整理しました</p>
+</div>
+
+<div class="container">
+
+  <!-- ゴール -->
+  <div class="section-title">🎯 作ったもの（ゴール）</div>
+  <div class="goal-box">
+    <p style="text-align:center; color:#718096; font-size:0.95rem;">毎日3時間おきに自動でAIニュースを集めて、重要な情報だけLINEに送るツール</p>
+    <div class="goal-flow">
+      <div class="goal-item"><div class="icon">⏰</div><div class="label">3時間おき</div><div class="sub">自動起動</div></div>
+      <div class="arrow">→</div>
+      <div class="goal-item"><div class="icon">📡</div><div class="label">ニュース収集</div><div class="sub">15サイトから</div></div>
+      <div class="arrow">→</div>
+      <div class="goal-item"><div class="icon">🤖</div><div class="label">AI が選別</div><div class="sub">重要なものだけ</div></div>
+      <div class="arrow">→</div>
+      <div class="goal-item"><div class="icon">💬</div><div class="label">LINE通知</div><div class="sub">自分のスマホへ</div></div>
+    </div>
+  </div>
+
+  <!-- ステップ -->
+  <div class="section-title">📋 今日やったこと（全ステップ）</div>
+  <div class="steps">
+
+    <div class="step you-did">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <span class="tag tag-you">あなたがやった</span>
+        <h3>📂 GitHubにリポジトリ（コードの保管場所）を作成</h3>
+        <p>github.com でボタンを押して「ai-digest-tool」という名前の箱を作りました。ここにツールのコードを入れていく「引き出し」を用意したイメージです。</p>
+      </div>
+    </div>
+
+    <div class="step ai-did">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <span class="tag tag-ai">AIがやった</span>
+        <h3>💻 ツールのコードを作成・アップロード</h3>
+        <p>AIがNode.js（プログラミング言語）でツールの設計図を書き、GitHubにアップロードしました。RSSを取得するコード・AIで分析するコード・LINEに送るコード、の3つのパーツで構成されています。</p>
+      </div>
+    </div>
+
+    <div class="step you-did">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <span class="tag tag-you">あなたがやった</span>
+        <h3>🔑 GitHubのアクセストークン（パスワード代わり）を取得・登録</h3>
+        <p>GitHubの設定ページで「ghp_...」から始まる長い文字列を発行しました。これはAIがあなたのGitHubに代わりにコードを送る許可証です。</p>
+      </div>
+    </div>
+
+    <div class="step you-did">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <span class="tag tag-you">あなたがやった</span>
+        <h3>🤖 Gemini（Google AI）のAPIキーを取得</h3>
+        <p>aistudio.google.com でAPIキー（「AIzaSy...」から始まる文字列）を発行しました。これはAIを呼び出すための「合言葉」です。これがないとAIが動きません。</p>
+      </div>
+    </div>
+
+    <div class="step you-did">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <span class="tag tag-you">あなたがやった</span>
+        <h3>💬 LINE公式アカウント「AI Digest」を作成</h3>
+        <p>LINE Developersでプロバイダーとチャネルを作成。Messaging APIを有効にして、ツールからLINEにメッセージを送れる状態を整えました。スマホで友だち追加もしました。</p>
+      </div>
+    </div>
+
+    <div class="step you-did">
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <span class="tag tag-you">あなたがやった</span>
+        <h3>🔐 GitHubにシークレット（APIキー3種）を登録</h3>
+        <p>以下の3つの「合言葉」をGitHubの金庫に登録しました。ツールが動くときに自動でこれらを使います。</p>
+        <p style="margin-top:8px; background:#f7fafc; padding:8px 12px; border-radius:8px; font-size:0.82rem;">
+          🔑 GEMINI_API_KEY（Google AIを呼び出す合言葉）<br>
+          🔑 LINE_CHANNEL_ACCESS_TOKEN（LINEに送る許可証）<br>
+          🔑 LINE_USER_ID（送り先のLINE ID）
+        </p>
+      </div>
+    </div>
+
+    <div class="step error-step">
+      <div class="step-num">7</div>
+      <div class="step-body">
+        <span class="tag tag-error">トラブル発生・AIが対処</span>
+        <h3>⚠️ 動作テスト中にエラーが連続発生</h3>
+        <p>実際に動かしてみたら3つのエラーが出ました。AIが原因を調べて1つずつ修正しました。</p>
+        <p style="margin-top:10px; font-size:0.83rem; color:#744210; background:#fefcbf; padding:10px 14px; border-radius:8px; line-height:1.8;">
+          ❌ <b>エラー1</b>：package-lock.json が抜けていた → 追加して解決<br>
+          ❌ <b>エラー2</b>：RSSフィードのURLが古かった（404エラー） → 正しいURLに修正<br>
+          ❌ <b>エラー3</b>：GeminiのAIモデル名が古かった（廃止済み） → 新しいモデル名に変更
+        </p>
+      </div>
+    </div>
+
+    <div class="step you-did">
+      <div class="step-num">8</div>
+      <div class="step-body">
+        <span class="tag tag-you">あなたがやった</span>
+        <h3>💳 Google Cloudに課金アカウントを紐付け</h3>
+        <p>Gemini APIの無料枠を使うためにクレジットカードを登録し、「Default Gemini Project」に紐付けました。無料枠内では請求されません（1日1,500回まで無料で、このツールは最大8回しか使わないため）。</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 裏側の技術説明 -->
+  <div class="section-title">🔧 裏でAIがやっていた技術的な作業</div>
+  <div class="tech-grid">
+
+    <div class="tech-card">
+      <h3>📦 npm / Node.js</h3>
+      <p>ツールを動かすエンジン。人間で言えば「体」の部分です。RSSの取得・AI呼び出し・LINE送信の処理を実行します。</p>
+      <div class="analogy">📬 例え：荷物の仕分けをする倉庫作業員</div>
+    </div>
+
+    <div class="tech-card">
+      <h3>📁 GitHub Actions</h3>
+      <p>ツールを「3時間おきに自動で動かす」仕組み。コードをGitHubに置いておくだけで、指定した時間に自動実行してくれます。</p>
+      <div class="analogy">⏰ 例え：スマホのアラーム機能。時間になったら自動で起こしてくれる</div>
+    </div>
+
+    <div class="tech-card">
+      <h3>📡 RSS フィード</h3>
+      <p>OpenAI・TechCrunch・Cursorなど15サイトのニュースを自動で取得する仕組み。サイトが新しい記事を出すと自動で受け取れます。</p>
+      <div class="analogy">📰 例え：15社の新聞を毎日自動で配達してもらうサービス</div>
+    </div>
+
+    <div class="tech-card">
+      <h3>🤖 Gemini API</h3>
+      <p>Google のAIを呼び出す窓口。15サイト分の記事を渡すと「重要なものだけ選んで日本語で要約して」という指示を実行してくれます。</p>
+      <div class="analogy">🧑‍💼 例え：優秀なリサーチャーに記事の要約をお願いする感じ</div>
+    </div>
+
+    <div class="tech-card">
+      <h3>🔐 GitHub Secrets</h3>
+      <p>APIキーなどの重要な情報を安全に保管する金庫。コードの中に直接書くと危険なので、別の場所に暗号化して保存します。</p>
+      <div class="analogy">🔑 例え：パスワードをメモ帳に書かず、鍵のかかる金庫に入れる</div>
+    </div>
+
+    <div class="tech-card">
+      <h3>💬 LINE Messaging API</h3>
+      <p>プログラムからLINEにメッセージを送る仕組み。LINE公式アカウントを作り、トークルームに自動でメッセージを投稿できます。</p>
+      <div class="analogy">📲 例え：ロボットがあなたのLINEに自動でメッセージを打ってくれる機能</div>
+    </div>
+
+  </div>
+
+  <!-- 完成形 -->
+  <div class="section-title">🎉 完成後の動き（毎日の自動フロー）</div>
+  <div class="final-box">
+    <h2>毎日3時間おきに<br>これが自動で動く</h2>
+    <div class="final-flow">
+      <div class="final-item"><div class="icon">⏰</div><div class="label">GitHub Actionsが起動</div></div>
+      <div class="final-arrow">→</div>
+      <div class="final-item"><div class="icon">📡</div><div class="label">15サイトから記事収集</div></div>
+      <div class="final-arrow">→</div>
+      <div class="final-item"><div class="icon">🤖</div><div class="label">GeminiAIが選別・要約</div></div>
+      <div class="final-arrow">→</div>
+      <div class="final-item"><div class="icon">💬</div><div class="label">LINEに通知</div></div>
+    </div>
+    <p>重要な情報がなければ何も送らない。<br>あなたは何もしなくても、スマホに重要なAIニュースだけが届く。</p>
+  </div>
+
+  <!-- 残りタスク -->
+  <div class="section-title">📌 残りのタスク（明日やること）</div>
+  <div class="todo-box">
+    <div class="todo-item">
+      <div class="todo-icon">⏳</div>
+      <div class="todo-text">
+        <h4>Google課金アカウントの反映を待つ</h4>
+        <p>明日午前10時以降に GitHub Actions で「Run workflow」を実行する。LINEに通知が届けば完成！</p>
+      </div>
+    </div>
+    <div class="todo-item">
+      <div class="todo-icon">✅</div>
+      <div class="todo-text">
+        <h4>もし動かなければ → AIに報告</h4>
+        <p>エラーが出た場合はCursorで「動かなかった」と伝えれば即対応します</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

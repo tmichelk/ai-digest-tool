@@ -3,11 +3,11 @@
 
 const { execSync } = require('child_process');
 const fs = require('fs');
-const path = require('path');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { VertexAI } = require('@google-cloud/vertexai');
 
 const MESSAGE_PATH = '/tmp/digest-message.txt';
 const FEEDS_PATH = '/tmp/raw-feeds.json';
+const CREDENTIALS_PATH = '/tmp/gcp-credentials.json';
 
 function buildPrompt(data) {
   const now = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
@@ -95,17 +95,23 @@ async function main() {
     return;
   }
 
-  console.log(`\n📰 ${totalArticles}件の記事を取得。Gemini AIで分析中...`);
+  console.log(`\n📰 ${totalArticles}件の記事を取得。Vertex AI Geminiで分析中...`);
 
-  // 3. Gemini APIで分析・フォーマット
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.error('❌ 環境変数 GEMINI_API_KEY が設定されていません');
+  // 3. 認証情報をセットアップ
+  const credentialsJson = process.env.GOOGLE_CREDENTIALS_JSON;
+  if (!credentialsJson) {
+    console.error('❌ 環境変数 GOOGLE_CREDENTIALS_JSON が設定されていません');
     process.exit(1);
   }
+  fs.writeFileSync(CREDENTIALS_PATH, credentialsJson, 'utf8');
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = CREDENTIALS_PATH;
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const credentials = JSON.parse(credentialsJson);
+  const projectId = credentials.project_id;
+
+  // 4. Vertex AI クライアントを初期化
+  const vertexAI = new VertexAI({ project: projectId, location: 'us-central1' });
+  const model = vertexAI.getGenerativeModel({ model: 'gemini-2.0-flash-001' });
 
   const prompt = buildPrompt(rawData);
   if (prompt === 'NO_ARTICLES') {
@@ -113,25 +119,26 @@ async function main() {
     return;
   }
 
-  console.log('Gemini APIにリクエスト送信中（最大90秒）...');
+  // 5. Gemini APIで分析・フォーマット
+  console.log('Vertex AI Gemini APIにリクエスト送信中（最大90秒）...');
   const geminiPromise = model.generateContent(prompt);
   const timeoutPromise = new Promise((_, reject) =>
     setTimeout(() => reject(new Error('Gemini APIがタイムアウトしました（90秒）')), 90000)
   );
   const result = await Promise.race([geminiPromise, timeoutPromise]);
-  const message = result.response.text().trim();
+  const message = result.response.candidates[0].content.parts[0].text.trim();
 
-  // 4. 価値ある情報がなければ終了
+  // 6. 価値ある情報がなければ終了
   if (!message || message === 'NO_CONTENT') {
     console.log('\n📭 価値ある情報なし。LINEへの送信をスキップします。');
     return;
   }
 
-  // 5. メッセージをファイルに書き出す
+  // 7. メッセージをファイルに書き出す
   fs.writeFileSync(MESSAGE_PATH, message, 'utf8');
   console.log('\n✅ メッセージ生成完了。LINEに送信中...');
 
-  // 6. LINEに送信
+  // 8. LINEに送信
   execSync(`node .claude/skills/line-sender/scripts/send-message.js ${MESSAGE_PATH}`, {
     stdio: 'inherit',
   });

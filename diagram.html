@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Digest — システム図解</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0f0f1a;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    color: white;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 1.3rem;
+    opacity: 0.5;
+    margin-bottom: 50px;
+    letter-spacing: 0.1em;
+    font-weight: 300;
+  }
+
+  svg {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+  }
+
+  /* ノードスタイル */
+  .node-circle {
+    filter: drop-shadow(0 0 16px rgba(255,255,255,0.15));
+  }
+
+  /* アニメーション */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  @keyframes flow {
+    0% { stroke-dashoffset: 20; }
+    100% { stroke-dashoffset: 0; }
+  }
+  @keyframes glow {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(100,200,255,0.3)); }
+    50% { filter: drop-shadow(0 0 20px rgba(100,200,255,0.8)); }
+  }
+
+  .flow-line {
+    stroke-dasharray: 6 4;
+    animation: flow 1s linear infinite;
+  }
+  .pulse { animation: pulse 2s ease-in-out infinite; }
+  .glow { animation: glow 3s ease-in-out infinite; }
+
+  /* 凡例 */
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    margin-top: 40px;
+    opacity: 0.6;
+    font-size: 0.8rem;
+  }
+  .legend-item { display: flex; align-items: center; gap: 8px; }
+  .legend-line {
+    width: 30px; height: 2px;
+    background: repeating-linear-gradient(90deg, #64c8ff 0, #64c8ff 6px, transparent 6px, transparent 10px);
+  }
+  .legend-line.solid { background: #64c8ff; }
+</style>
+</head>
+<body>
+
+<h1>AI DIGEST — SYSTEM ARCHITECTURE</h1>
+
+<svg viewBox="0 0 800 700" width="800" height="700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- グラデーション定義 -->
+    <radialGradient id="grad-clock" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#667eea"/>
+      <stop offset="100%" style="stop-color:#764ba2"/>
+    </radialGradient>
+    <radialGradient id="grad-rss" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#f6ad55"/>
+      <stop offset="100%" style="stop-color:#dd6b20"/>
+    </radialGradient>
+    <radialGradient id="grad-ai" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#4299e1"/>
+      <stop offset="100%" style="stop-color:#2b6cb0"/>
+    </radialGradient>
+    <radialGradient id="grad-line" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#48bb78"/>
+      <stop offset="100%" style="stop-color:#276749"/>
+    </radialGradient>
+    <radialGradient id="grad-github" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#718096"/>
+      <stop offset="100%" style="stop-color:#1a202c"/>
+    </radialGradient>
+    <radialGradient id="grad-secrets" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#f687b3"/>
+      <stop offset="100%" style="stop-color:#b83280"/>
+    </radialGradient>
+
+    <!-- 矢印マーカー -->
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#64c8ff" opacity="0.8"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#68d391" opacity="0.8"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#f6ad55" opacity="0.8"/>
+    </marker>
+    <marker id="arrow-pink" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#f687b3" opacity="0.8"/>
+    </marker>
+
+    <!-- グロー効果 -->
+    <filter id="glow-filter">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ========== 背景グリッド ========== -->
+  <g opacity="0.05">
+    <line x1="0" y1="100" x2="800" y2="100" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="200" x2="800" y2="200" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="300" x2="800" y2="300" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="400" x2="800" y2="400" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="500" x2="800" y2="500" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="600" x2="800" y2="600" stroke="white" stroke-width="1"/>
+    <line x1="100" y1="0" x2="100" y2="700" stroke="white" stroke-width="1"/>
+    <line x1="200" y1="0" x2="200" y2="700" stroke="white" stroke-width="1"/>
+    <line x1="300" y1="0" x2="300" y2="700" stroke="white" stroke-width="1"/>
+    <line x1="400" y1="0" x2="400" y2="700" stroke="white" stroke-width="1"/>
+    <line x1="500" y1="0" x2="500" y2="700" stroke="white" stroke-width="1"/>
+    <line x1="600" y1="0" x2="600" y2="700" stroke="white" stroke-width="1"/>
+    <line x1="700" y1="0" x2="700" y2="700" stroke="white" stroke-width="1"/>
+  </g>
+
+  <!-- ========== 接続線（背面に描画）========== -->
+
+  <!-- GitHub → GitHub Actions（点線） -->
+  <path d="M 200 120 L 300 190" stroke="#718096" stroke-width="1.5"
+    stroke-dasharray="4 3" opacity="0.4" marker-end="url(#arrow)"/>
+
+  <!-- Clock → RSS feeds（起動） -->
+  <path d="M 400 120 L 180 240" stroke="#64c8ff" stroke-width="2"
+    stroke-dasharray="6 4" opacity="0.7" marker-end="url(#arrow)"
+    class="flow-line"/>
+  <path d="M 400 120 L 620 240" stroke="#64c8ff" stroke-width="2"
+    stroke-dasharray="6 4" opacity="0.7" marker-end="url(#arrow)"
+    class="flow-line"/>
+
+  <!-- RSSノードたち → AI（データ送信） -->
+  <path d="M 130 310 Q 280 350 360 370" stroke="#f6ad55" stroke-width="2"
+    stroke-dasharray="6 4" opacity="0.7" marker-end="url(#arrow-orange)"
+    class="flow-line"/>
+  <path d="M 230 310 Q 300 350 360 370" stroke="#f6ad55" stroke-width="2"
+    stroke-dasharray="6 4" opacity="0.7" marker-end="url(#arrow-orange)"
+    class="flow-line"/>
+  <path d="M 570 310 Q 490 350 440 370" stroke="#f6ad55" stroke-width="2"
+    stroke-dasharray="6 4" opacity="0.7" marker-end="url(#arrow-orange)"
+    class="flow-line"/>
+  <path d="M 670 310 Q 540 350 440 370" stroke="#f6ad55" stroke-width="2"
+    stroke-dasharray="6 4" opacity="0.7" marker-end="url(#arrow-orange)"
+    class="flow-line"/>
+
+  <!-- Secrets → AI（APIキー供給） -->
+  <path d="M 160 500 Q 250 460 360 420" stroke="#f687b3" stroke-width="1.5"
+    stroke-dasharray="4 3" opacity="0.5" marker-end="url(#arrow-pink)"/>
+
+  <!-- AI → LINE（送信） -->
+  <path d="M 440 430 L 560 510" stroke="#68d391" stroke-width="2.5"
+    stroke-dasharray="6 4" opacity="0.8" marker-end="url(#arrow-green)"
+    class="flow-line"/>
+
+  <!-- LINE → スマホ -->
+  <path d="M 620 570 L 620 620" stroke="#68d391" stroke-width="2.5"
+    opacity="0.8" marker-end="url(#arrow-green)"/>
+
+  <!-- ========== ノード：GitHub（左上） ========== -->
+  <g transform="translate(160, 80)" class="node-circle">
+    <circle r="42" fill="url(#grad-github)" stroke="#718096" stroke-width="1.5" opacity="0.9"/>
+    <text y="-2" text-anchor="middle" font-size="26">🐙</text>
+    <text y="14" text-anchor="middle" font-size="9" fill="#cbd5e0" font-weight="600" letter-spacing="0.05em">GITHUB</text>
+    <!-- バッジ -->
+    <rect x="-28" y="22" width="56" height="14" rx="7" fill="#2d3748"/>
+    <text x="0" y="32" text-anchor="middle" font-size="7.5" fill="#a0aec0">コード保管庫</text>
+  </g>
+
+  <!-- ========== ノード：GitHub Actions（中左） ========== -->
+  <g transform="translate(310, 200)" class="node-circle">
+    <circle r="48" fill="url(#grad-github)" stroke="#718096" stroke-width="1.5" opacity="0.95"/>
+    <text y="-4" text-anchor="middle" font-size="28">⚙️</text>
+    <text y="14" text-anchor="middle" font-size="9" fill="#cbd5e0" font-weight="600" letter-spacing="0.05em">GITHUB</text>
+    <text y="25" text-anchor="middle" font-size="9" fill="#cbd5e0" font-weight="600" letter-spacing="0.05em">ACTIONS</text>
+    <rect x="-34" y="30" width="68" height="14" rx="7" fill="#2d3748"/>
+    <text x="0" y="40" text-anchor="middle" font-size="7.5" fill="#a0aec0">自動実行エンジン</text>
+  </g>
+
+  <!-- ========== ノード：時計（中央上） ========== -->
+  <g transform="translate(400, 80)">
+    <circle r="46" fill="url(#grad-clock)" stroke="#9f7aea" stroke-width="2" opacity="0.95" class="pulse"/>
+    <text y="-2" text-anchor="middle" font-size="28">⏰</text>
+    <text y="14" text-anchor="middle" font-size="8.5" fill="#e9d8fd" font-weight="700" letter-spacing="0.08em">3時間おき</text>
+    <rect x="-30" y="22" width="60" height="14" rx="7" fill="rgba(0,0,0,0.3)"/>
+    <text x="0" y="32" text-anchor="middle" font-size="7.5" fill="#d6bcfa">自動スタート</text>
+  </g>
+
+  <!-- ========== RSSノードたち ========== -->
+  <!-- RSS左1 -->
+  <g transform="translate(100, 270)">
+    <circle r="36" fill="url(#grad-rss)" stroke="#f6ad55" stroke-width="1.5" opacity="0.9"/>
+    <text y="-2" text-anchor="middle" font-size="20">📰</text>
+    <text y="12" text-anchor="middle" font-size="7.5" fill="#fefcbf" font-weight="600">OpenAI</text>
+    <text y="22" text-anchor="middle" font-size="7" fill="#fef3c7">TechCrunch</text>
+  </g>
+  <!-- RSS左2 -->
+  <g transform="translate(210, 270)">
+    <circle r="36" fill="url(#grad-rss)" stroke="#f6ad55" stroke-width="1.5" opacity="0.9"/>
+    <text y="-2" text-anchor="middle" font-size="20">📰</text>
+    <text y="12" text-anchor="middle" font-size="7.5" fill="#fefcbf" font-weight="600">Google AI</text>
+    <text y="22" text-anchor="middle" font-size="7" fill="#fef3c7">Wired</text>
+  </g>
+  <!-- RSS右1 -->
+  <g transform="translate(590, 270)">
+    <circle r="36" fill="url(#grad-rss)" stroke="#f6ad55" stroke-width="1.5" opacity="0.9"/>
+    <text y="-2" text-anchor="middle" font-size="20">📰</text>
+    <text y="12" text-anchor="middle" font-size="7.5" fill="#fefcbf" font-weight="600">Cursor</text>
+    <text y="22" text-anchor="middle" font-size="7" fill="#fef3c7">Anthropic</text>
+  </g>
+  <!-- RSS右2 -->
+  <g transform="translate(700, 270)">
+    <circle r="36" fill="url(#grad-rss)" stroke="#f6ad55" stroke-width="1.5" opacity="0.9"/>
+    <text y="-2" text-anchor="middle" font-size="20">📰</text>
+    <text y="12" text-anchor="middle" font-size="7.5" fill="#fefcbf" font-weight="600">MIT Tech</text>
+    <text y="22" text-anchor="middle" font-size="7" fill="#fef3c7">+ 10 more</text>
+  </g>
+
+  <!-- RSS省略記号 -->
+  <text x="400" y="278" text-anchor="middle" font-size="22" fill="#f6ad55" opacity="0.6">・・・</text>
+  <text x="400" y="296" text-anchor="middle" font-size="9" fill="#f6ad55" opacity="0.5">合計15サイト</text>
+
+  <!-- ========== ノード：AI（中央） ========== -->
+  <g transform="translate(400, 400)" class="glow">
+    <circle r="62" fill="url(#grad-ai)" stroke="#63b3ed" stroke-width="2.5" opacity="0.95"/>
+    <circle r="70" fill="none" stroke="#63b3ed" stroke-width="1" opacity="0.3" stroke-dasharray="4 4"/>
+    <text y="-8" text-anchor="middle" font-size="32">🤖</text>
+    <text y="12" text-anchor="middle" font-size="10" fill="#bee3f8" font-weight="700" letter-spacing="0.08em">GEMINI AI</text>
+    <text y="26" text-anchor="middle" font-size="8" fill="#90cdf4">選別・要約・翻訳</text>
+    <rect x="-38" y="32" width="76" height="14" rx="7" fill="rgba(0,0,0,0.3)"/>
+    <text x="0" y="42" text-anchor="middle" font-size="7.5" fill="#bee3f8">Google製AI</text>
+  </g>
+
+  <!-- ========== ノード：Secrets（左下） ========== -->
+  <g transform="translate(130, 500)">
+    <circle r="40" fill="url(#grad-secrets)" stroke="#f687b3" stroke-width="1.5" opacity="0.9"/>
+    <text y="-4" text-anchor="middle" font-size="24">🔐</text>
+    <text y="12" text-anchor="middle" font-size="8" fill="#fed7e2" font-weight="600">API KEYS</text>
+    <rect x="-34" y="20" width="68" height="14" rx="7" fill="rgba(0,0,0,0.3)"/>
+    <text x="0" y="30" text-anchor="middle" font-size="7.5" fill="#fbb6ce">GitHub Secrets</text>
+  </g>
+
+  <!-- ========== ノード：LINE（右下） ========== -->
+  <g transform="translate(620, 540)">
+    <circle r="48" fill="url(#grad-line)" stroke="#68d391" stroke-width="2" opacity="0.95"/>
+    <text y="-4" text-anchor="middle" font-size="28">💬</text>
+    <text y="14" text-anchor="middle" font-size="10" fill="#c6f6d5" font-weight="700" letter-spacing="0.05em">LINE</text>
+    <rect x="-36" y="22" width="72" height="14" rx="7" fill="rgba(0,0,0,0.3)"/>
+    <text x="0" y="32" text-anchor="middle" font-size="7.5" fill="#9ae6b4">Messaging API</text>
+  </g>
+
+  <!-- ========== ノード：スマホ ========== -->
+  <g transform="translate(620, 660)">
+    <rect x="-28" y="-38" width="56" height="76" rx="10" fill="#1a202c" stroke="#68d391" stroke-width="2"/>
+    <rect x="-20" y="-30" width="40" height="55" rx="4" fill="#2d3748"/>
+    <circle r="4" cy="34" fill="#68d391" opacity="0.7"/>
+    <text y="-8" text-anchor="middle" font-size="22">📱</text>
+    <text y="8" text-anchor="middle" font-size="7" fill="#9ae6b4">AI Digest</text>
+  </g>
+
+  <!-- ========== ラベル（接続線の説明） ========== -->
+  <!-- 起動 -->
+  <rect x="320" y="138" width="44" height="16" rx="8" fill="rgba(102,126,234,0.3)"/>
+  <text x="342" y="149" text-anchor="middle" font-size="8" fill="#e9d8fd">起　動</text>
+
+  <!-- ニュース取得 -->
+  <rect x="155" y="188" width="66" height="16" rx="8" fill="rgba(246,173,85,0.2)"/>
+  <text x="188" y="199" text-anchor="middle" font-size="8" fill="#fef3c7">ニュース取得</text>
+
+  <!-- 記事データ -->
+  <rect x="180" y="340" width="60" height="16" rx="8" fill="rgba(246,173,85,0.2)"/>
+  <text x="210" y="351" text-anchor="middle" font-size="8" fill="#fef3c7">記 事 デ ー タ</text>
+
+  <!-- APIキー -->
+  <rect x="195" y="453" width="50" height="16" rx="8" fill="rgba(246,135,179,0.2)"/>
+  <text x="220" y="464" text-anchor="middle" font-size="8" fill="#fbb6ce">APIキー</text>
+
+  <!-- 選別済み記事 -->
+  <rect x="462" y="466" width="72" height="16" rx="8" fill="rgba(104,211,145,0.2)"/>
+  <text x="498" y="477" text-anchor="middle" font-size="8" fill="#9ae6b4">選別済み記事</text>
+
+  <!-- 通知 -->
+  <rect x="596" y="590" width="36" height="16" rx="8" fill="rgba(104,211,145,0.2)"/>
+  <text x="614" y="601" text-anchor="middle" font-size="8" fill="#9ae6b4">通　知</text>
+
+</svg>
+
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-line"></div>
+    <span>データの流れ（自動）</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-line solid"></div>
+    <span>APIキーの供給</span>
+  </div>
+</div>
+
+</body>
+</html>
