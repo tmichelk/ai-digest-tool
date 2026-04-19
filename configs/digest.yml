@@ -90,6 +90,6 @@ settings:
   # 各カテゴリの最大掲載件数
   max_articles_per_category: 3
   # 何時間以内の記事を対象にするか
-  lookback_hours: 3
+  lookback_hours: 24
   # 報告言語
   language: ja
