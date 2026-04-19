@@ -7,7 +7,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "@google-cloud/vertexai": "^1.9.3",
+    "@google/genai": "^1.0.0",
     "js-yaml": "^4.1.0",
     "rss-parser": "^3.13.0"
   }
