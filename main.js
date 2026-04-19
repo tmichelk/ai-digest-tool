@@ -79,6 +79,13 @@ ${articlesText}
 🤖 AI Digest で自動生成`;
 }
 
+// プロセス全体に3分のタイムアウト（無限ハング防止）
+const globalTimeout = setTimeout(() => {
+  console.error('❌ グローバルタイムアウト（3分）。プロセスを強制終了します。');
+  process.exit(1);
+}, 180000);
+globalTimeout.unref();
+
 async function main() {
   console.log('=== AI Digest Tool 起動 ===');
 
@@ -110,13 +117,21 @@ async function main() {
   const projectId = credentials.project_id;
 
   // 4. サービスアカウントでアクセストークンを取得
+  console.log('🔑 Google認証を開始...');
+  const credentials = JSON.parse(credentialsJson);
+  console.log(`📋 プロジェクトID: ${projectId}`);
+  console.log(`📋 サービスアカウント: ${credentials.client_email}`);
+
   const auth = new GoogleAuth({
     keyFile: CREDENTIALS_PATH,
     scopes: ['https://www.googleapis.com/auth/cloud-platform'],
   });
+  console.log('🔑 authクライアント作成中...');
   const authClient = await auth.getClient();
+  console.log('🔑 アクセストークン取得中...');
   const tokenResponse = await authClient.getAccessToken();
   const token = tokenResponse.token;
+  console.log('✅ 認証完了');
 
   const prompt = buildPrompt(rawData);
   if (prompt === 'NO_ARTICLES') {
