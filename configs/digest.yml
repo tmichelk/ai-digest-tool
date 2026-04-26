@@ -7,9 +7,9 @@ feeds:
     url: https://openai.com/blog/rss.xml
     category: tools
 
-  - id: anthropic
-    name: Anthropic Blog
-    url: https://www.anthropic.com/rss.xml
+  - id: simonwillison
+    name: Simon Willison's Weblog (AI)
+    url: https://simonwillison.net/atom/everything/
     category: tools
 
   - id: google_ai
@@ -81,9 +81,9 @@ feeds:
     url: https://cursor.com/changelog/rss.xml
     category: cursor
 
-  - id: reddit_localllama
-    name: Reddit r/LocalLLaMA
-    url: https://www.reddit.com/r/LocalLLaMA/.rss
+  - id: bensbites
+    name: Ben's Bites (AI Newsletter)
+    url: https://bensbites.beehiiv.com/feed
     category: research
 
 settings:
