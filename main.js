@@ -118,7 +118,6 @@ async function main() {
 
   // 4. サービスアカウントでアクセストークンを取得
   console.log('🔑 Google認証を開始...');
-  const credentials = JSON.parse(credentialsJson);
   console.log(`📋 プロジェクトID: ${projectId}`);
   console.log(`📋 サービスアカウント: ${credentials.client_email}`);
 
