@@ -3,7 +3,7 @@
 
 const { execSync } = require('child_process');
 const fs = require('fs');
-const { GoogleAuth } = require('google-auth-library');
+const { JWT } = require('google-auth-library');
 
 const MESSAGE_PATH = '/tmp/digest-message.txt';
 const FEEDS_PATH = '/tmp/raw-feeds.json';
@@ -116,19 +116,18 @@ async function main() {
   const credentials = JSON.parse(credentialsJson);
   const projectId = credentials.project_id;
 
-  // 4. サービスアカウントでアクセストークンを取得
+  // 4. JWTで直接アクセストークンを取得（環境チェックなし）
   console.log('🔑 Google認証を開始...');
   console.log(`📋 プロジェクトID: ${projectId}`);
   console.log(`📋 サービスアカウント: ${credentials.client_email}`);
 
-  const auth = new GoogleAuth({
-    keyFile: CREDENTIALS_PATH,
+  const jwtClient = new JWT({
+    email: credentials.client_email,
+    key: credentials.private_key,
     scopes: ['https://www.googleapis.com/auth/cloud-platform'],
   });
-  console.log('🔑 authクライアント作成中...');
-  const authClient = await auth.getClient();
   console.log('🔑 アクセストークン取得中...');
-  const tokenResponse = await authClient.getAccessToken();
+  const tokenResponse = await jwtClient.getAccessToken();
   const token = tokenResponse.token;
   console.log('✅ 認証完了');
 
