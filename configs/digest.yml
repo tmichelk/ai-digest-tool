@@ -7,9 +7,9 @@ feeds:
     url: https://openai.com/blog/rss.xml
     category: tools
 
-  - id: ai_news
-    name: AI News
-    url: https://www.artificialintelligence-news.com/feed/
+  - id: nvidia_blog
+    name: NVIDIA AI Blog
+    url: https://feeds.feedburner.com/nvidiablog
     category: tools
 
   - id: google_ai
