@@ -7,9 +7,9 @@ feeds:
     url: https://openai.com/blog/rss.xml
     category: tools
 
-  - id: simonwillison
-    name: Simon Willison's Weblog (AI)
-    url: https://simonwillison.net/atom/everything/
+  - id: ai_news
+    name: AI News
+    url: https://www.artificialintelligence-news.com/feed/
     category: tools
 
   - id: google_ai
