@@ -81,9 +81,9 @@ feeds:
     url: https://cursor.com/changelog/rss.xml
     category: cursor
 
-  - id: bensbites
-    name: Ben's Bites (AI Newsletter)
-    url: https://bensbites.beehiiv.com/feed
+  - id: microsoft_ai
+    name: Microsoft AI Blog
+    url: https://blogs.microsoft.com/ai/feed/
     category: research
 
 settings:
