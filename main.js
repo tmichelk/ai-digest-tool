@@ -3,11 +3,9 @@
 
 const { execSync } = require('child_process');
 const fs = require('fs');
-const { JWT } = require('google-auth-library');
 
 const MESSAGE_PATH = '/tmp/digest-message.txt';
 const FEEDS_PATH = '/tmp/raw-feeds.json';
-const CREDENTIALS_PATH = '/tmp/gcp-credentials.json';
 
 function buildPrompt(data) {
   const now = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
@@ -79,12 +77,34 @@ ${articlesText}
 🤖 AI Digest で自動生成`;
 }
 
-// プロセス全体に3分のタイムアウト（無限ハング防止）
-const globalTimeout = setTimeout(() => {
-  console.error('❌ グローバルタイムアウト（3分）。プロセスを強制終了します。');
-  process.exit(1);
-}, 180000);
-globalTimeout.unref();
+async function callGemini(prompt, apiKey) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 90000);
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 2048 },
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Gemini APIエラー ${res.status}: ${err}`);
+    }
+
+    const data = await res.json();
+    return data.candidates[0].content.parts[0].text.trim();
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 async function main() {
   console.log('=== AI Digest Tool 起動 ===');
@@ -102,34 +122,14 @@ async function main() {
     return;
   }
 
-  console.log(`\n📰 ${totalArticles}件の記事を取得。Vertex AI Geminiで分析中...`);
+  console.log(`\n📰 ${totalArticles}件の記事を取得。Gemini AIで分析中...`);
 
-  // 3. 認証情報をセットアップ
-  const credentialsJson = process.env.GOOGLE_CREDENTIALS_JSON;
-  if (!credentialsJson) {
-    console.error('❌ 環境変数 GOOGLE_CREDENTIALS_JSON が設定されていません');
+  // 3. APIキーを確認
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error('❌ 環境変数 GEMINI_API_KEY が設定されていません');
     process.exit(1);
   }
-  fs.writeFileSync(CREDENTIALS_PATH, credentialsJson, 'utf8');
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = CREDENTIALS_PATH;
-
-  const credentials = JSON.parse(credentialsJson);
-  const projectId = credentials.project_id;
-
-  // 4. JWTで直接アクセストークンを取得（環境チェックなし）
-  console.log('🔑 Google認証を開始...');
-  console.log(`📋 プロジェクトID: ${projectId}`);
-  console.log(`📋 サービスアカウント: ${credentials.client_email}`);
-
-  const jwtClient = new JWT({
-    email: credentials.client_email,
-    key: credentials.private_key,
-    scopes: ['https://www.googleapis.com/auth/cloud-platform'],
-  });
-  console.log('🔑 アクセストークン取得中...');
-  const tokenResponse = await jwtClient.getAccessToken();
-  const token = tokenResponse.token;
-  console.log('✅ 認証完了');
 
   const prompt = buildPrompt(rawData);
   if (prompt === 'NO_ARTICLES') {
@@ -137,45 +137,22 @@ async function main() {
     return;
   }
 
-  // 5. Vertex AI REST APIで直接Geminiを呼び出す
-  console.log('Vertex AI Gemini APIにリクエスト送信中（最大90秒）...');
-  const endpoint = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/gemini-1.5-flash:generateContent`;
+  // 4. Gemini APIで分析
+  console.log('🤖 Gemini APIにリクエスト送信中（最大90秒）...');
+  const message = await callGemini(prompt, apiKey);
+  console.log('✅ Gemini応答受信完了');
 
-  const geminiPromise = fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 2048 },
-    }),
-  }).then(async (res) => {
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Vertex AI APIエラー: ${res.status} ${err}`);
-    }
-    return res.json();
-  });
-
-  const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Gemini APIがタイムアウトしました（90秒）')), 90000)
-  );
-  const result = await Promise.race([geminiPromise, timeoutPromise]);
-  const message = result.candidates[0].content.parts[0].text.trim();
-
-  // 6. 価値ある情報がなければ終了
+  // 5. 価値ある情報がなければ終了
   if (!message || message === 'NO_CONTENT') {
     console.log('\n📭 価値ある情報なし。LINEへの送信をスキップします。');
     return;
   }
 
-  // 7. メッセージをファイルに書き出す
+  // 6. メッセージをファイルに書き出す
   fs.writeFileSync(MESSAGE_PATH, message, 'utf8');
   console.log('\n✅ メッセージ生成完了。LINEに送信中...');
 
-  // 8. LINEに送信
+  // 7. LINEに送信
   execSync(`node .claude/skills/line-sender/scripts/send-message.js ${MESSAGE_PATH}`, {
     stdio: 'inherit',
   });
