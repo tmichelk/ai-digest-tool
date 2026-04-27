@@ -103,7 +103,9 @@ async function main() {
   console.log(`  合計: ${totalFiltered} 件 / 失敗フィード: ${failedFeeds.length} 件`);
 }
 
-main().catch((err) => {
+main().then(() => {
+  process.exit(0);
+}).catch((err) => {
   console.error('[fetch-feeds] 予期しないエラー:', err);
   process.exit(1);
 });
