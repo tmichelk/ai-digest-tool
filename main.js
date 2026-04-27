@@ -78,7 +78,7 @@ ${articlesText}
 }
 
 async function callGemini(prompt, apiKey) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 90000);
