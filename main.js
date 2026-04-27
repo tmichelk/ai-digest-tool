@@ -3,6 +3,7 @@
 
 const { execSync } = require('child_process');
 const fs = require('fs');
+const { JWT } = require('google-auth-library');
 
 const MESSAGE_PATH = '/tmp/digest-message.txt';
 const FEEDS_PATH = '/tmp/raw-feeds.json';
@@ -77,8 +78,22 @@ ${articlesText}
 🤖 AI Digest で自動生成`;
 }
 
-async function callGemini(prompt, apiKey) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+async function callGemini(prompt, credentialsJson) {
+  const credentials = JSON.parse(credentialsJson);
+  const projectId = credentials.project_id;
+
+  // JWTでアクセストークンを取得
+  console.log('🔑 Vertex AI認証中...');
+  const jwtClient = new JWT({
+    email: credentials.client_email,
+    key: credentials.private_key,
+    scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+  });
+  const tokenResponse = await jwtClient.getAccessToken();
+  const token = tokenResponse.token;
+  console.log('✅ 認証完了');
+
+  const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/gemini-1.5-flash:generateContent`;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 90000);
@@ -86,9 +101,12 @@ async function callGemini(prompt, apiKey) {
   try {
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: { maxOutputTokens: 2048 },
       }),
       signal: controller.signal,
@@ -96,7 +114,7 @@ async function callGemini(prompt, apiKey) {
 
     if (!res.ok) {
       const err = await res.text();
-      throw new Error(`Gemini APIエラー ${res.status}: ${err}`);
+      throw new Error(`Vertex AI APIエラー ${res.status}: ${err}`);
     }
 
     const data = await res.json();
@@ -124,10 +142,10 @@ async function main() {
 
   console.log(`\n📰 ${totalArticles}件の記事を取得。Gemini AIで分析中...`);
 
-  // 3. APIキーを確認
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    console.error('❌ 環境変数 GEMINI_API_KEY が設定されていません');
+  // 3. 認証情報を確認
+  const credentialsJson = process.env.GOOGLE_CREDENTIALS_JSON;
+  if (!credentialsJson) {
+    console.error('❌ 環境変数 GOOGLE_CREDENTIALS_JSON が設定されていません');
     process.exit(1);
   }
 
@@ -137,9 +155,9 @@ async function main() {
     return;
   }
 
-  // 4. Gemini APIで分析
-  console.log('🤖 Gemini APIにリクエスト送信中（最大90秒）...');
-  const message = await callGemini(prompt, apiKey);
+  // 4. Vertex AI Geminiで分析
+  console.log('🤖 Vertex AI Geminiにリクエスト送信中（最大90秒）...');
+  const message = await callGemini(prompt, credentialsJson);
   console.log('✅ Gemini応答受信完了');
 
   // 5. 価値ある情報がなければ終了
