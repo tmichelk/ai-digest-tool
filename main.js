@@ -93,7 +93,7 @@ async function callGemini(prompt, credentialsJson) {
   const token = tokenResponse.token;
   console.log('✅ 認証完了');
 
-  const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/gemini-1.5-flash-001:generateContent`;
+  const url = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/gemini-3.1-flash-lite-preview:generateContent`;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 90000);
