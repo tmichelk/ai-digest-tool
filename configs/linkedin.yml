@@ -1,0 +1,44 @@
+# LinkedIn アップデート監視の設定
+
+feeds:
+  # ─── LinkedIn 社内（公式発信）──────────────────────
+  - id: li_news
+    name: LinkedIn Pressroom
+    url: https://news.linkedin.com/rss
+    origin: internal
+
+  - id: li_blog
+    name: LinkedIn Official Blog
+    url: https://blog.linkedin.com/rss
+    origin: internal
+
+  - id: li_engineering
+    name: LinkedIn Engineering Blog
+    url: https://engineering.linkedin.com/blog.rss.html
+    origin: internal
+
+  # ─── LinkedIn 社外（報道・コミュニティ）──────────────
+  - id: gnews_features
+    name: Google News（LinkedIn 新機能）
+    url: https://news.google.com/rss/search?q=LinkedIn+(%22new+feature%22+OR+%22rolling+out%22+OR+launches+OR+%22coming+soon%22+OR+update)+when:2d&hl=en-US&gl=US&ceid=US:en
+    origin: external
+
+  - id: gnews_ja
+    name: Google News（LinkedIn 新機能・日本語）
+    url: https://news.google.com/rss/search?q=LinkedIn+(新機能+OR+提供開始+OR+アップデート+OR+導入)+when:2d&hl=ja&gl=JP&ceid=JP:ja
+    origin: external
+
+  - id: reddit_linkedin
+    name: Reddit r/linkedin
+    url: https://www.reddit.com/r/linkedin/new/.rss
+    origin: external
+
+settings:
+  # 何時間前までの記事を候補にするか（送信済み管理があるので長めでOK）
+  lookback_hours: 48
+  # 1通のメールに載せる最大件数
+  max_items_per_mail: 8
+  # 1回の実行でAIに渡す最大記事数
+  max_candidates: 60
+  # 送信済みURLの保持件数
+  seen_limit: 2000

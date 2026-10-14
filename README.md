@@ -200,3 +200,26 @@ configs/
 | AI実行 | Claude Code Action | Skills機能で知識を分離・再利用 |
 | ニュース取得 | RSS（rss-parser） | 無料・信頼性が高い |
 | 通知 | LINE Messaging API | 月200通まで無料、スマホに即届く |
+
+---
+
+## LinkedIn 新機能モニター（Gmail通知）
+
+LinkedIn社内（Pressroom・公式ブログ・Engineering Blog）と社外（ニュース・Reddit）から、
+**追加された／追加予定の新機能・アップデート**を毎時チェックし、「これ便利！」なものだけを出典付きで Gmail に送ります。
+
+- 実行: `.github/workflows/linkedin-monitor.yml`（毎時17分、24時間稼働）
+- スクリプト: `scripts/linkedin-monitor.js` / 監視対象: `configs/linkedin.yml`
+- 送信済みURLは Actions キャッシュで管理し、同じ情報は二度送りません
+- 便利な情報がない回はメールを送りません
+
+### 必要な GitHub Secrets
+
+| シークレット名 | 用途 |
+|---|---|
+| `GEMINI_API_KEY` | 記事の選別・日本語要約（既存と共通） |
+| `GMAIL_USER` | 送信に使う Gmail アドレス |
+| `GMAIL_APP_PASSWORD` | Google アカウントの[アプリパスワード](https://myaccount.google.com/apppasswords)（2段階認証が必要） |
+| `MAIL_TO` | 宛先（省略時は `GMAIL_USER` 宛） |
+
+ローカル確認: `GEMINI_API_KEY=... node scripts/linkedin-monitor.js --dry-run`（メールは送らず内容を表示）

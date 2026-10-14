@@ -1,0 +1,49 @@
+name: LinkedIn Update Monitor
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '17 * * * *'  # 毎時17分（24時間・1時間おき）
+
+concurrency:
+  group: linkedin-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - run: npm ci
+
+      # 送信済みURLの記録を実行間で引き継ぐ
+      - name: Restore seen state
+        uses: actions/cache/restore@v4
+        with:
+          path: .state
+          key: linkedin-seen-${{ github.run_id }}
+          restore-keys: linkedin-seen-
+
+      - name: Run LinkedIn monitor
+        run: node scripts/linkedin-monitor.js
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
+
+      - name: Save seen state
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: .state
+          key: linkedin-seen-${{ github.run_id }}
