@@ -100,18 +100,19 @@ JSON配列のみ。最大${maxItems}件（厳選。3件に満たなければ無�
 各要素:
 {
   "index": 番号,
-  "title": "ユーモアのある見出し（40字以内。釣りにならない程度に）",
+  "title": "ツッコミ・誇張・たとえを効かせた大胆な見出し（40字以内）",
   "status": "提供開始" | "段階的に展開中" | "提供予定" | "ベータ" | "不明",
-  "before": "これまで（従来）はどうだったか。1〜2文。",
-  "after": "どこがどう変わるのか。具体的に（画面・操作・数字・名称など記事にある事実）。2〜3文。",
-  "wow": "どのように便利になるのか。『こんな場面で、こう助かる』を具体的な日常シーンで。ユーモアたっぷり、笑える比喩やツッコミ歓迎。3〜5文。",
+  "before": "「元々は○○だった」。従来の仕様・やり方・不便さを具体的に。ユーザーの『あるある』な苦労として描く。2〜3文。",
+  "after": "「それが○○に進化した」。何がどう変わったかを、画面・操作・名称・数字・日付など記事にある事実で具体的に。『元々○○→今は○○』の対比がひと目で分かる書き方。2〜3文。",
+  "wow": "「だからこうなる」。進化の結果、誰がどんな場面でどう楽になるかを、日常の具体的なシーン（例：月曜の朝、終電、上司の前）で描く。比喩・誇張・ツッコミ・大げさな実況を遠慮なく使い、笑えること最優先。4〜6文。",
   "who": "特に嬉しい人(20字以内)"
 }
 
 【文章ルール】
-- 事実（変更内容・日付・名称）は記事の記載から外れないこと。記事にないことを断定しない。ユーモアは表現で出し、事実は盛らない。
-- 誰かを傷つける・揶揄する表現は避け、LinkedInユーザー全員が笑って読める軽さにする。
-- 文字数制限はない。わかりやすさと面白さを優先する。
+- ユーモアは大胆に。ボケ・ツッコミ・たとえ話・大げさな実況・自虐的あるあるを積極的に使う。ただし1文ごとに『何が変わったか』は必ず読み取れること（笑いだけで中身が消えるのは禁止）。
+- 事実（変更内容・日付・名称・数字）は記事の記載から外れないこと。記事にないことを断定しない。笑いは表現と比喩で作り、事実は盛らない。
+- 特定の個人・企業・属性を貶める表現は避ける。笑いのネタにするのは「仕様」と「ユーザーあるある」。
+- 文字数制限はない。具体性と面白さを優先する。
 
 【記事一覧】
 ${list}`;
@@ -156,7 +157,7 @@ function renderMail(items, now) {
     '',
     ...items.map(
       (it) =>
-        `■ ${it.title}【${it.status}】\n  🕰 これまで: ${it.before}\n  🔧 どこが変わる: ${it.after}\n  ✨ どう便利？: ${it.wow}\n  👤 ${it.who}\n  📎 出典: ${it.source}（${it.origin === 'internal' ? 'LinkedIn公式' : '社外'}）\n  ${it.link}\n`
+        `■ ${it.title}【${it.status}】\n  🕰 元々は: ${it.before}\n  🚀 進化: ${it.after}\n  ✨ だからこうなる: ${it.wow}\n  👤 ${it.who}\n  📎 出典: ${it.source}（${it.origin === 'internal' ? 'LinkedIn公式' : '社外'}）\n  ${it.link}\n`
     ),
   ].join('\n');
 
@@ -168,9 +169,9 @@ ${items
     (it) => `<div style="border:1px solid #e0e0e0;border-radius:8px;padding:14px 16px;margin:14px 0">
 <div style="font-size:12px;color:#0a66c2;font-weight:600">${escapeHtml(it.status)}</div>
 <div style="font-size:17px;font-weight:700;margin:4px 0 8px">${escapeHtml(it.title)}</div>
-<div style="font-size:13px;color:#555;line-height:1.6;margin-bottom:6px">🕰 <b>これまで</b>：${escapeHtml(it.before)}</div>
-<div style="font-size:14px;line-height:1.7;margin-bottom:6px">🔧 <b>どこが変わる</b>：${escapeHtml(it.after)}</div>
-<div style="font-size:14px;line-height:1.7;background:#f3f8fe;border-radius:6px;padding:8px 10px">✨ <b>どう便利？</b>　${escapeHtml(it.wow)}</div>
+<div style="font-size:13px;color:#555;line-height:1.6;margin-bottom:6px">🕰 <b>元々は</b>：${escapeHtml(it.before)}</div>
+<div style="font-size:14px;line-height:1.7;margin-bottom:6px">🚀 <b>それが進化</b>：${escapeHtml(it.after)}</div>
+<div style="font-size:14px;line-height:1.7;background:#f3f8fe;border-radius:6px;padding:8px 10px">✨ <b>だからこうなる</b>　${escapeHtml(it.wow)}</div>
 <div style="font-size:13px;color:#444;margin-top:8px">👤 ${escapeHtml(it.who)}</div>
 <div style="font-size:12px;margin-top:8px">📎 出典: <a href="${escapeHtml(it.link)}">${escapeHtml(it.source)}</a>（${it.origin === 'internal' ? 'LinkedIn公式' : '社外'}）</div>
 </div>`
