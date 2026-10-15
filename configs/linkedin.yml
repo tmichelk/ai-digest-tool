@@ -2,19 +2,25 @@
 
 feeds:
   # ─── LinkedIn 社内（公式発信）──────────────────────
-  - id: li_news
-    name: LinkedIn Pressroom
-    url: https://news.linkedin.com/rss
+  # 公式サイトのRSSが不安定なため、Google News の site: 検索で公式ドメインの新着を拾う
+  - id: li_official_news
+    name: LinkedIn Pressroom / 公式ニュース
+    url: https://news.google.com/rss/search?q=site:news.linkedin.com+when:7d&hl=en-US&gl=US&ceid=US:en
     origin: internal
 
-  - id: li_blog
+  - id: li_official_blog
     name: LinkedIn Official Blog
-    url: https://blog.linkedin.com/rss
+    url: https://news.google.com/rss/search?q=site:linkedin.com/blog+when:7d&hl=en-US&gl=US&ceid=US:en
     origin: internal
 
   - id: li_engineering
     name: LinkedIn Engineering Blog
-    url: https://engineering.linkedin.com/blog.rss.html
+    url: https://news.google.com/rss/search?q=site:engineering.linkedin.com+when:14d&hl=en-US&gl=US&ceid=US:en
+    origin: internal
+
+  - id: li_help
+    name: LinkedIn Help / Product 発表
+    url: https://news.google.com/rss/search?q=site:linkedin.com/help+OR+site:business.linkedin.com+when:7d&hl=en-US&gl=US&ceid=US:en
     origin: internal
 
   # ─── LinkedIn 社外（報道・コミュニティ）──────────────

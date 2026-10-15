@@ -44,7 +44,7 @@ async function collect(config, seen) {
 
   for (const feed of feeds) {
     try {
-      const result = await parser.parseURL(feed.url);
+      const result = await parser.parseURL(encodeURI(feed.url));
       for (const item of result.items) {
         const link = item.link || item.guid;
         const pub = item.isoDate || item.pubDate;
@@ -109,14 +109,25 @@ async function callGemini(prompt, apiKey) {
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 4096, responseMimeType: 'application/json' },
+      generationConfig: {
+        maxOutputTokens: 8192,
+        responseMimeType: 'application/json',
+        thinkingConfig: { thinkingBudget: 0 },
+      },
     }),
     signal: AbortSignal.timeout(90000),
   });
   if (!res.ok) throw new Error(`Gemini APIエラー ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
-  const parsed = JSON.parse(text);
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    // 出力が途中で切れた場合、完結している要素だけ救出する
+    const complete = text.slice(0, text.lastIndexOf('}') + 1).replace(/,\s*$/, '');
+    parsed = JSON.parse(complete.endsWith(']') ? complete : complete + ']');
+  }
   if (!Array.isArray(parsed)) throw new Error('Geminiの出力が配列ではありません');
   return parsed;
 }
@@ -206,7 +217,10 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('❌ エラー:', err.message);
-  process.exit(1);
-});
+// 未クローズのソケットでプロセスが居残り、ジョブがタイムアウトするのを防ぐ
+main()
+  .then(() => process.exit(0))
+  .catch((err) => {
+    console.error('❌ エラー:', err.message);
+    process.exit(1);
+  });
