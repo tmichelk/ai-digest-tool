@@ -1,7 +1,12 @@
 name: LinkedIn Update Monitor
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      test_mail:
+        description: 'テストメールだけ送る（送信設定の確認用）'
+        type: boolean
+        default: false
   schedule:
     - cron: '17 * * * *'  # 毎時17分（24時間・1時間おき）
 
@@ -40,6 +45,7 @@ jobs:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           MAIL_TO: ${{ secrets.MAIL_TO }}
+          TEST_MAIL: ${{ inputs.test_mail }}
 
       - name: Save seen state
         if: success()

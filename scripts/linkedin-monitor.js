@@ -13,6 +13,7 @@ const nodemailer = require('nodemailer');
 const CONFIG_PATH = path.resolve(__dirname, '../configs/linkedin.yml');
 const STATE_PATH = process.env.LINKEDIN_STATE_PATH || path.resolve(__dirname, '../.state/linkedin-seen.json');
 const DRY_RUN = process.argv.includes('--dry-run');
+const TEST_MAIL = process.argv.includes('--test-mail') || process.env.TEST_MAIL === 'true';
 
 const parser = new Parser({
   timeout: 15000,
@@ -180,6 +181,27 @@ async function sendMail({ subject, text, html }) {
 }
 
 async function main() {
+  if (TEST_MAIL) {
+    // 送信経路（Gmail認証・宛先）だけを確認するテスト。記事の取得・判定は行わない。
+    const mail = renderMail(
+      [
+        {
+          title: 'テストメール：LinkedIn新機能モニター',
+          status: 'テスト',
+          wow: 'このメールが届いていれば、Gmailでの送信設定は正常です。新機能が見つかると、同じ形式でここに届きます。',
+          who: '設定確認用',
+          source: 'LinkedIn Watcher',
+          origin: 'internal',
+          link: 'https://github.com/tmichelk/ai-digest-tool',
+        },
+      ],
+      new Date()
+    );
+    await sendMail(mail);
+    console.log('✅ テストメールを送信しました。受信トレイ（迷惑メールも）を確認してください。');
+    return;
+  }
+
   const config = yaml.load(fs.readFileSync(CONFIG_PATH, 'utf8'));
   const { settings } = config;
   const seen = loadState();
