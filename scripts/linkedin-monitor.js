@@ -84,7 +84,7 @@ function buildPrompt(candidates, maxItems) {
     .join('\n\n');
 
   return `あなたはLinkedInの新機能ウォッチャーです。以下の記事から、LinkedInに「追加された／追加予定の」新機能・アップデート・仕様変更を扱っているものだけを選び、
-LinkedInユーザーが「めっちゃ便利やん！」と思う点を日本語で説明してください。
+LinkedInユーザーが「めっちゃ便利やん！」と思う点を、日本語で、おもしろおかしく具体的に説明してください。
 
 【選ぶ基準】
 - LinkedIn本体の新機能・改善・ベータ・提供予定の発表（公式・報道・ユーザー報告のいずれも可）
@@ -96,8 +96,22 @@ LinkedInユーザーが「めっちゃ便利やん！」と思う点を日本語
 - 機能の詳細が全くない記事
 
 【出力】
-JSON配列のみ。最大${maxItems}件。重要度の高い順。該当なしなら [] 。
-各要素: {"index": 番号, "title": "日本語の見出し(30字以内)", "status": "提供開始" | "段階的に展開中" | "提供予定" | "ベータ" | "不明", "wow": "何がどう便利か。2〜3文・120字以内。具体的に。", "who": "特に嬉しい人(20字以内)"}
+JSON配列のみ。最大${maxItems}件（厳選。3件に満たなければ無理に埋めない）。重要度の高い順。該当なしなら [] 。
+各要素:
+{
+  "index": 番号,
+  "title": "ユーモアのある見出し（40字以内。釣りにならない程度に）",
+  "status": "提供開始" | "段階的に展開中" | "提供予定" | "ベータ" | "不明",
+  "before": "これまで（従来）はどうだったか。1〜2文。",
+  "after": "どこがどう変わるのか。具体的に（画面・操作・数字・名称など記事にある事実）。2〜3文。",
+  "wow": "どのように便利になるのか。『こんな場面で、こう助かる』を具体的な日常シーンで。ユーモアたっぷり、笑える比喩やツッコミ歓迎。3〜5文。",
+  "who": "特に嬉しい人(20字以内)"
+}
+
+【文章ルール】
+- 事実（変更内容・日付・名称）は記事の記載から外れないこと。記事にないことを断定しない。ユーモアは表現で出し、事実は盛らない。
+- 誰かを傷つける・揶揄する表現は避け、LinkedInユーザー全員が笑って読める軽さにする。
+- 文字数制限はない。わかりやすさと面白さを優先する。
 
 【記事一覧】
 ${list}`;
@@ -142,7 +156,7 @@ function renderMail(items, now) {
     '',
     ...items.map(
       (it) =>
-        `■ ${it.title}【${it.status}】\n  ${it.wow}\n  👤 ${it.who}\n  📎 出典: ${it.source}（${it.origin === 'internal' ? 'LinkedIn公式' : '社外'}）\n  ${it.link}\n`
+        `■ ${it.title}【${it.status}】\n  🕰 これまで: ${it.before}\n  🔧 どこが変わる: ${it.after}\n  ✨ どう便利？: ${it.wow}\n  👤 ${it.who}\n  📎 出典: ${it.source}（${it.origin === 'internal' ? 'LinkedIn公式' : '社外'}）\n  ${it.link}\n`
     ),
   ].join('\n');
 
@@ -154,7 +168,9 @@ ${items
     (it) => `<div style="border:1px solid #e0e0e0;border-radius:8px;padding:14px 16px;margin:14px 0">
 <div style="font-size:12px;color:#0a66c2;font-weight:600">${escapeHtml(it.status)}</div>
 <div style="font-size:17px;font-weight:700;margin:4px 0 8px">${escapeHtml(it.title)}</div>
-<div style="font-size:14px;line-height:1.6">${escapeHtml(it.wow)}</div>
+<div style="font-size:13px;color:#555;line-height:1.6;margin-bottom:6px">🕰 <b>これまで</b>：${escapeHtml(it.before)}</div>
+<div style="font-size:14px;line-height:1.7;margin-bottom:6px">🔧 <b>どこが変わる</b>：${escapeHtml(it.after)}</div>
+<div style="font-size:14px;line-height:1.7;background:#f3f8fe;border-radius:6px;padding:8px 10px">✨ <b>どう便利？</b>　${escapeHtml(it.wow)}</div>
 <div style="font-size:13px;color:#444;margin-top:8px">👤 ${escapeHtml(it.who)}</div>
 <div style="font-size:12px;margin-top:8px">📎 出典: <a href="${escapeHtml(it.link)}">${escapeHtml(it.source)}</a>（${it.origin === 'internal' ? 'LinkedIn公式' : '社外'}）</div>
 </div>`
@@ -188,7 +204,9 @@ async function main() {
         {
           title: 'テストメール：LinkedIn新機能モニター',
           status: 'テスト',
-          wow: 'このメールが届いていれば、Gmailでの送信設定は正常です。新機能が見つかると、同じ形式でここに届きます。',
+          before: '送信設定が合っているか、毎回ドキドキしていた。',
+          after: '設定確認用のテストメールが届くようになった。',
+          wow: 'このメールが届いていれば、Gmailでの送信設定は正常です。ドキドキは今日で卒業。新機能が見つかると、同じ形式でここに届きます。',
           who: '設定確認用',
           source: 'LinkedIn Watcher',
           origin: 'internal',
@@ -218,7 +236,15 @@ async function main() {
   const items = picks
     .filter((p) => candidates[p.index])
     .slice(0, settings.max_items_per_mail)
-    .map((p) => ({ ...candidates[p.index], title: p.title, status: p.status || '不明', wow: p.wow, who: p.who || '' }));
+    .map((p) => ({
+      ...candidates[p.index],
+      title: p.title,
+      status: p.status || '不明',
+      before: p.before || '',
+      after: p.after || '',
+      wow: p.wow || '',
+      who: p.who || '',
+    }));
 
   if (items.length) {
     const mail = renderMail(items, new Date());

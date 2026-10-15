@@ -42,8 +42,8 @@ feeds:
 settings:
   # 何時間前までの記事を候補にするか（送信済み管理があるので長めでOK）
   lookback_hours: 48
-  # 1通のメールに載せる最大件数
-  max_items_per_mail: 8
+  # 1通のメールに載せる最大件数（厳選して3件まで）
+  max_items_per_mail: 3
   # 1回の実行でAIに渡す最大記事数
   max_candidates: 60
   # 送信済みURLの保持件数
